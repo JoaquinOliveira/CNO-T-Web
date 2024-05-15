@@ -1,0 +1,13 @@
+.dashboard {
+  transition: background-color 0.3s;
+}
+
+.dark-mode {
+  background-color: #001529;
+  color: #fff;
+}
+
+.light-mode {
+  background-color: #fff;
+  color: #000;
+}
