@@ -1,38 +1,84 @@
-.App {
-  text-align: center;
+.general {
+  background-color: var(--background-color);
+  padding: 50px; /* Agrega un padding de 20px al layout general */
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.header-container {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  margin-bottom: 20px;
+  background-color: var(--background-color);
 }
 
-.App-link {
-  color: #61dafb;
+.header-logo {
+  width: 100px;
+  height: auto;
+  margin-right: 10px;
+  border: 1px;
+  border-radius: 5px;
+  margin-left: 3px;
+  margin-top: 3px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.app-header {
+  font-size: 24px;
+  background-color: var(--background-color);
+  color: var(--header-text-color);
+}
+
+.description {
+  text-align: center;
+  margin: 20px 0;
+  font-size: 18px;
+  background-color: var(--background-color);
+  color: var(--header-text-color);
+}
+
+.switch-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+  margin-right: 20px; /* Agrega un margen derecho de 20px al switch */
+}
+
+
+@media screen and (max-width: 768px) {
+  .general {
+    padding: 30px;
   }
-  to {
-    transform: rotate(360deg);
+
+  .header-logo {
+    width: 80px;
+  }
+
+  .app-header {
+    font-size: 20px;
+  }
+
+  .description {
+    font-size: 16px;
+  }
+
+  .switch-container {
+    margin-right: 10px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .general {
+    padding: 20px;
+  }
+
+  .header-logo {
+    width: 60px;
+  }
+
+  .app-header {
+    font-size: 18px;
+  }
+
+  .description {
+    font-size: 14px;
   }
 }
