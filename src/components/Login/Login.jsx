@@ -17,7 +17,7 @@ const Login = () => {
             const user = userCredential.user;
 
             if (user.emailVerified) {
-                navigate('/dashboard');
+                navigate('/home');
             } else {
                 notification.warning({
                     message: 'Correo electrónico no verificado',
@@ -44,7 +44,7 @@ const Login = () => {
             // Verificar si el usuario ya existe en la base de datos
             // Si no existe, registrarlo automáticamente
 
-            navigate('/dashboard');
+            navigate('/home');
         } catch (error) {
             console.error('Error al iniciar sesión con Google:', error.message);
             notification.error({

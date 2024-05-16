@@ -26,7 +26,7 @@ const Register = () => {
                 placement: 'topRight',
             });
 
-            navigate('/login');
+            navigate('/');
         } catch (error) {
             console.error('Error al registrar usuario:', error.message);
             notification.error({
