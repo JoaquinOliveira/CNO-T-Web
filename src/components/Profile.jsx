@@ -1,78 +1,175 @@
-import React from 'react';
-import { Layout, Typography, Form, Input, Button, Switch } from 'antd';
-import useTheme from '../utils/useTheme';
-import Navbar from './Navbar';
+import React, { useEffect, useState } from 'react';
+import { Form, Input, Button, Col, notification, Checkbox, Row, Tag, Modal } from 'antd';
+import { getUserById, updateUserInFirestore } from '../firebase/db';
+import { auth } from '../firebase/firebase-config'
+import { useNavigate } from 'react-router-dom';
 
-const { Content } = Layout;
-const { Title } = Typography;
 
-const Profile = () => {
-    const { isDarkMode, handleThemeChange } = useTheme();
+const Profile = ( ) => {
     const [form] = Form.useForm();
+    const navigate = useNavigate();
+    const [selectedHours, setSelectedHours] = useState([]);
+    const [visibleModal, setVisibleModal] = useState(false);
+    const [selectedDay, setSelectedDay] = useState(null);
 
-    const handleSave = (values) => {
-        // Lógica para guardar los datos del perfil
-        console.log('Profile data:', values);
+
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const userId = auth.currentUser.uid;
+                const userData = await getUserById(userId);
+                if (userData) {
+                    form.setFieldsValue({
+                        name: userData.name,
+                        phone: userData.phone,
+                        socio: userData.socio,
+                    });
+                    setSelectedHours(userData.playPreference || []);
+                }
+            } catch (error) {
+                console.error('Error al obtener los datos del usuario:', error);
+            }
+        };
+
+        fetchUserData();
+    }, [form]);
+
+    const handleSave = async (values) => {
+        try {
+            const userId = auth.currentUser.uid;
+
+
+            const updatedData = {
+                name: values.name,
+                phone: values.phone,
+                playPreference: selectedHours,
+                socio: values.socio,
+            };
+            await updateUserInFirestore(userId, updatedData);
+
+            console.log('Perfil actualizado exitosamente');
+            notification.success({
+                message: 'Perfil actualizado',
+                description: 'Tu perfil se ha actualizado exitosamente.',
+            });
+            navigate('/home');
+        } catch (error) {
+            console.error('Error al actualizar el perfil:', error);
+            notification.error({
+                message: 'Error al actualizar el perfil',
+                description: 'Ocurrió un error al actualizar tu perfil. Por favor, intenta nuevamente.',
+            });
+        }
+    };
+    const handleHourSelection = (hour, day) => {
+        const selectedHour = `${day} - ${hour}`;
+        if (selectedHours.includes(selectedHour)) {
+            setSelectedHours(selectedHours.filter((h) => h !== selectedHour));
+        } else {
+            setSelectedHours([...selectedHours, selectedHour]);
+        }
     };
 
+    const openModal = (day) => {
+        setSelectedDay(day);
+        setVisibleModal(true);
+    };
+
+    const closeModal = () => {
+        setSelectedDay(null);
+        setVisibleModal(false);
+    };
+
+    const renderPlayPreference = () => {
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+        return (
+            <>
+                <Form.Item label="Select Preferred Days">
+                    <Row gutter={[8, 8]}>
+                        {days.map((day) => (
+                            <Col key={day}>
+                                <Button onClick={() => openModal(day)}>{day}</Button>
+                            </Col>
+                        ))}
+                    </Row>
+                </Form.Item>
+                <Form.Item label="Selected Hours">
+                    {selectedHours.map((selectedHour) => (
+                        <Tag key={selectedHour} closable onClose={() => handleHourSelection(...selectedHour.split(' - '))}>
+                            {selectedHour}
+                        </Tag>
+                    ))}
+                </Form.Item>
+            </>
+        );
+    };
+
+    const renderHoursModal = () => {
+        const hours = Array.from({ length: 11 }, (_, index) => `${index + 10}:00`);
+
+        return (
+            <Modal
+                title={`Select Hours for ${selectedDay}`}
+                visible={visibleModal}
+                onCancel={closeModal}
+                footer={[
+                    <Button key="close" onClick={closeModal}>
+                        Close
+                    </Button>,
+                ]}
+            >
+                <Checkbox.Group style={{ width: '100%' }}>
+                    <Row gutter={[8, 8]}>
+                        {hours.map((hour) => (
+                            <Col key={`${selectedDay}-${hour}`} span={8}>
+                                <Checkbox value={`${selectedDay}-${hour}`} onChange={() => handleHourSelection(hour, selectedDay)}>
+                                    {hour}
+                                </Checkbox>
+                            </Col>
+                        ))}
+                    </Row>
+                </Checkbox.Group>
+            </Modal>
+        );
+    };
     return (
-        <Layout>
-            <Navbar />
-            <Content style={{ padding: '50px' }}>
-                <Title level={2}>Profile</Title>
-                <Form form={form} onFinish={handleSave} layout="vertical">
-                    <Form.Item
-                        name="firstName"
-                        label="First Name"
-                        rules={[{ required: true, message: 'Please enter your first name' }]}
-                    >
-                        <Input />
-                    </Form.Item>
-                    <Form.Item
-                        name="lastName"
-                        label="Last Name"
-                        rules={[{ required: true, message: 'Please enter your last name' }]}
-                    >
-                        <Input />
-                    </Form.Item>
-                    <Form.Item
-                        name="membershipNumber"
-                        label="Membership Number"
-                        rules={[{ required: true, message: 'Please enter your membership number' }]}
-                    >
-                        <Input />
-                    </Form.Item>
-                    <Form.Item
-                        name="email"
-                        label="Email"
-                        rules={[{ required: true, message: 'Please enter your email' }]}
-                    >
-                        <Input />
-                    </Form.Item>
-                    <Form.Item
-                        name="phone"
-                        label="Phone Number"
-                        rules={[{ required: true, message: 'Please enter your phone number' }]}
-                    >
-                        <Input />
-                    </Form.Item>
-                    <Form.Item name="theme" label="Theme">
-                        <Switch
-                            checked={isDarkMode}
-                            onChange={handleThemeChange}
-                            checkedChildren="Dark"
-                            unCheckedChildren="Light"
-                        />
-                    </Form.Item>
-                    <Form.Item>
-                        <Button type="primary" htmlType="submit">
-                            Save
-                        </Button>
-                    </Form.Item>
-                </Form>
-            </Content>
-        </Layout>
+        <>
+            <Form form={form} onFinish={handleSave} layout="vertical">
+                <Form.Item
+                    name="name"
+                    label="Name"
+                    rules={[{ required: true, message: 'Please enter your name' }]}
+                >
+                    <Input />
+                </Form.Item>
+
+                <Form.Item
+                    name="phone"
+                    label="Phone Number"
+                    rules={[{ required: true, message: 'Please enter your phone number' }]}
+                >
+                    <Input />
+                </Form.Item>
+                {renderPlayPreference()}
+
+                <Form.Item
+                    name="socio"
+                    label="Socio"
+                    rules={[{ required: true, message: 'Please enter your socio number' }]}
+                >
+                    <Input />
+                </Form.Item>
+                <Form.Item>
+                    <Button type="primary" htmlType="submit">
+                        Save
+                    </Button>
+                </Form.Item>
+                {renderHoursModal()}
+            </Form>
+        </>
     );
 };
 
 export default Profile;
+

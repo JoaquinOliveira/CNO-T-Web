@@ -5,6 +5,7 @@ import { GoogleOutlined, MailOutlined, LockOutlined } from '@ant-design/icons';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '../../firebase/firebase-config';
 import escudoClub from '../../assets/CNLogo.png';
+import { createUserInFirestore, getUserById } from '../../firebase/db';
 /* import fondoLogin from '../assets/fondo-login.jpg';  */
 
 const { Text } = Typography;
@@ -40,16 +41,28 @@ const Login = () => {
             const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
-
+    
             // Verificar si el usuario ya existe en la base de datos
-            // Si no existe, registrarlo automáticamente
-
-            navigate('/home');
+            const userSnapshot = await getUserById(user.uid);
+    
+            if (!userSnapshot) {
+                // Si el usuario no existe, registrarlo automáticamente y redirigir a la página de perfil
+                const newUser = {
+                    id: user.uid,
+                    email: user.email,
+                    // Agrega otros campos iniciales si es necesario
+                };
+                await createUserInFirestore(user.uid, newUser);
+                navigate('/profile');
+            } else {
+                // Si el usuario ya existe, redirigir a la página de inicio
+                navigate('/home');
+            }
         } catch (error) {
             console.error('Error al iniciar sesión con Google:', error.message);
             notification.error({
                 message: 'Error al iniciar sesión con Google',
-                description: 'Usuario / Contraseña incorrecta',
+                description: 'Ocurrió un error al iniciar sesión con Google',
                 placement: 'topRight',
             });
         }

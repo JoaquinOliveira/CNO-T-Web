@@ -1,7 +1,7 @@
 import React from 'react';
 import { Layout, Typography, List, Button } from 'antd';
 import { Link } from 'react-router-dom';
-import Navbar from './Navbar';
+
 
 const { Content } = Layout;
 const { Title } = Typography;
@@ -41,7 +41,6 @@ const Tournaments = () => {
 
     return (
         <Layout>
-            <Navbar />
             <Content style={{ padding: '50px' }}>
                 <Title level={2}>Past Tournaments</Title>
                 <List

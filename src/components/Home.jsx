@@ -1,7 +1,7 @@
 import React from 'react';
 import { Layout, Typography, Card, Row, Col } from 'antd';
 import { CopyrightOutlined } from '@ant-design/icons';
-import Navbar from './Navbar';
+
 
 const { Footer, Content } = Layout;
 const { Title, Text } = Typography;
@@ -29,7 +29,7 @@ const Home = () => {
 
     return (
         <Layout>
-            <Navbar />
+
             <Content style={{ padding: '50px' }}>
                 <Row gutter={[16, 16]}>
                     <Col span={12}>

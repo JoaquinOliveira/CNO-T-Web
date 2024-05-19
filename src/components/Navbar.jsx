@@ -1,12 +1,14 @@
 import React from 'react';
-import { Layout, Menu, Button } from 'antd';
-import { Link, useNavigate } from 'react-router-dom';
+import { Menu } from 'antd';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { LogoutOutlined } from '@ant-design/icons';
 import { auth } from '../firebase/firebase-config';
-import escudoClub from '../assets/CNLogo.png'
-const { Header } = Layout;
+import escudoClub from '../assets/CNLogo.png';
+import UserMenu from './UserMenu';
 
-const Navbar = () => {
+
+
+const Navbar = ({ user }) => {
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -19,33 +21,43 @@ const Navbar = () => {
     };
 
     return (
-        <Header>
-            <div className="logo">
-                <Link to="/home">
-                    <img
-                        src={escudoClub}
-                        style={{ height: '40px', marginRight: '10px', marginTop: '10px' }}
-                        alt="Club Logo"
-                    />
-                </Link>
+        <Menu
+            theme="dark"
+            mode="horizontal"
+            selectedKeys={[window.location.pathname]}
+            style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+            }}
+        >
+            <Menu.Item key="logo">
+                <NavLink to="/home">
+                    <img src={escudoClub} alt="Club Logo" style={{ height: '40px', marginRight: '10px', marginTop: '15px' }} />
+                </NavLink>
+            </Menu.Item>
+            <div style={{ display: 'flex', justifyContent: 'left', flexGrow: 1 }}>
+                <Menu.Item key="/home">
+                    <NavLink to="/home" activeClassName="active-link">
+                        Home
+                    </NavLink>
+                </Menu.Item>
+                <Menu.Item key="/tournaments">
+                    <NavLink to="/tournaments" activeClassName="active-link">
+                        Tournaments
+                    </NavLink>
+                </Menu.Item>
+                <Menu.Item key="/profile">
+                    <NavLink to="/results" activeClassName="active-link">
+                        Results
+                    </NavLink>
+                </Menu.Item>
             </div>
-            <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['home']}>
-                <Menu.Item key="home">
-                    <Link to="/home">Home</Link>
-                </Menu.Item>
-                <Menu.Item key="tournaments">
-                    <Link to="/tournaments">Tournaments</Link>
-                </Menu.Item>
-                <Menu.Item key="profile">
-                    <Link to="/profile">Profile</Link>
-                </Menu.Item>
-                <Menu.Item key="signout">
-                    <Button type="primary" danger icon={<LogoutOutlined />} onClick={handleLogout}>
-                        Logout
-                    </Button>
-                </Menu.Item>
-            </Menu>
-        </Header>
+            <UserMenu user={user} />
+            <Menu.Item key="logout" onClick={handleLogout}>
+                <LogoutOutlined style={{ fontSize: '20px', marginRight: '15px' }} />
+            </Menu.Item>
+        </Menu>
     );
 };
 

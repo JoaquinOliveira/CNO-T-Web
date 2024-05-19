@@ -5,6 +5,7 @@ import { MailOutlined, LockOutlined } from '@ant-design/icons';
 import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { auth } from '../firebase/firebase-config';
 import escudoClub from '../assets/CNLogo.png';
+import { createUserInFirestore } from '../firebase/db';
 
 
 const { Title, Text } = Typography;
@@ -16,17 +17,25 @@ const Register = () => {
         try {
             const { user } = await createUserWithEmailAndPassword(auth, values.email, values.password);
             console.log('Usuario registrado:', user);
-
+    
+            // Crear el usuario en Firestore
+            const newUser = {
+                id: user.uid,
+                email: user.email,
+                // Agrega otros campos iniciales si es necesario
+            };
+            await createUserInFirestore(user.uid, newUser);
+    
             // Enviar correo electrónico de verificación
             await sendEmailVerification(user);
-
+    
             notification.success({
                 message: 'Registro exitoso',
                 description: 'Se ha enviado un correo electrónico de verificación. Por favor, verifica tu cuenta.',
                 placement: 'topRight',
             });
-
-            navigate('/');
+    
+            navigate('/profile');
         } catch (error) {
             console.error('Error al registrar usuario:', error.message);
             notification.error({
