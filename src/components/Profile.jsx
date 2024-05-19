@@ -1,17 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Input, Button, Col, notification, Checkbox, Row, Tag, Modal } from 'antd';
 import { getUserById, updateUserInFirestore } from '../firebase/db';
-import { auth } from '../firebase/firebase-config'
+import { auth } from '../firebase/firebase-config';
 import { useNavigate } from 'react-router-dom';
 
-
-const Profile = ( ) => {
+const Profile = () => {
     const [form] = Form.useForm();
     const navigate = useNavigate();
-    const [selectedHours, setSelectedHours] = useState([]);
     const [visibleModal, setVisibleModal] = useState(false);
     const [selectedDay, setSelectedDay] = useState(null);
-
+    const [selectedHours, setSelectedHours] = useState([]);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -37,8 +35,6 @@ const Profile = ( ) => {
     const handleSave = async (values) => {
         try {
             const userId = auth.currentUser.uid;
-
-
             const updatedData = {
                 name: values.name,
                 phone: values.phone,
@@ -46,8 +42,6 @@ const Profile = ( ) => {
                 socio: values.socio,
             };
             await updateUserInFirestore(userId, updatedData);
-
-            console.log('Perfil actualizado exitosamente');
             notification.success({
                 message: 'Perfil actualizado',
                 description: 'Tu perfil se ha actualizado exitosamente.',
@@ -61,13 +55,13 @@ const Profile = ( ) => {
             });
         }
     };
-    const handleHourSelection = (hour, day) => {
-        const selectedHour = `${day} - ${hour}`;
-        if (selectedHours.includes(selectedHour)) {
-            setSelectedHours(selectedHours.filter((h) => h !== selectedHour));
-        } else {
-            setSelectedHours([...selectedHours, selectedHour]);
-        }
+
+ 
+
+    const handleTagClose = (selectedHour) => {
+        setSelectedHours((prevSelectedHours) =>
+            prevSelectedHours.filter((h) => h !== selectedHour)
+        );
     };
 
     const openModal = (day) => {
@@ -96,7 +90,11 @@ const Profile = ( ) => {
                 </Form.Item>
                 <Form.Item label="Selected Hours">
                     {selectedHours.map((selectedHour) => (
-                        <Tag key={selectedHour} closable onClose={() => handleHourSelection(...selectedHour.split(' - '))}>
+                        <Tag
+                            key={selectedHour}
+                            closable
+                            onClose={() => handleTagClose(selectedHour)}
+                        >
                             {selectedHour}
                         </Tag>
                     ))}
@@ -119,13 +117,25 @@ const Profile = ( ) => {
                     </Button>,
                 ]}
             >
-                <Checkbox.Group style={{ width: '100%' }}>
+                <Checkbox.Group
+                    style={{ width: '100%' }}
+                    value={selectedHours
+                        .filter((h) => h.startsWith(selectedDay))
+                        .map((h) => h.split(' - ')[1])}
+                    onChange={(checkedValues) => {
+                        const newSelectedHours = selectedHours.filter(
+                            (h) => !h.startsWith(selectedDay)
+                        );
+                        const updatedSelectedHours = Array.from(
+                            new Set([...newSelectedHours, ...checkedValues.map((hour) => `${selectedDay} - ${hour}`)])
+                        );
+                        setSelectedHours(updatedSelectedHours);
+                    }}
+                >
                     <Row gutter={[8, 8]}>
                         {hours.map((hour) => (
                             <Col key={`${selectedDay}-${hour}`} span={8}>
-                                <Checkbox value={`${selectedDay}-${hour}`} onChange={() => handleHourSelection(hour, selectedDay)}>
-                                    {hour}
-                                </Checkbox>
+                                <Checkbox value={hour}>{hour}</Checkbox>
                             </Col>
                         ))}
                     </Row>
@@ -133,6 +143,7 @@ const Profile = ( ) => {
             </Modal>
         );
     };
+
     return (
         <>
             <Form form={form} onFinish={handleSave} layout="vertical">

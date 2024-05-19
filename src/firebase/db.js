@@ -41,6 +41,7 @@ const updateUserInFirestore = async (userId, updatedData) => {
     try {
         const userRef = doc(db, 'users', userId);
         await updateDoc(userRef, updatedData);
+        console.log('Nuevos datos del usuario:', updatedData);
         console.log('Usuario actualizado en Firestore');
     } catch (error) {
         console.error('Error al actualizar usuario en Firestore:', error);
