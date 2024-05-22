@@ -1,7 +1,7 @@
 // PlayPreference.jsx
 import React, { useState } from 'react';
 import { Form, Button, Row, Col } from 'antd';
-import SelectedHours from './SelectedHours';
+import SelectedHours from './SelectedHours'
 import HoursModal from './HoursModal';
 
 const PlayPreference = ({ selectedHours, setSelectedHours }) => {

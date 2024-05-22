@@ -8,7 +8,8 @@ import UserMenu from './UserMenu';
 
 
 
-const Navbar = ({ user }) => {
+const Navbar = () => {
+
     const navigate = useNavigate();
 
     const handleLogout = async () => {
@@ -53,7 +54,7 @@ const Navbar = ({ user }) => {
                     </NavLink>
                 </Menu.Item>
             </div>
-            <UserMenu user={user} />
+            <UserMenu />
             <Menu.Item key="logout" onClick={handleLogout}>
                 <LogoutOutlined style={{ fontSize: '20px', marginRight: '15px' }} />
             </Menu.Item>

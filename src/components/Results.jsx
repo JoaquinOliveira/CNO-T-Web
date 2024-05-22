@@ -1,59 +1,42 @@
-import React from 'react';
-import { Layout, Typography, List } from 'antd';
-/* import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase-config'; */
+import React, { useEffect, useCallback, useMemo } from 'react';
+import { Layout, Typography, List, Spin } from 'antd';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchMatches } from '../redux/matchesSlices';
+import { auth } from '../firebase/firebase-config';
 
 const { Content } = Layout;
 const { Title } = Typography;
 
-const Results = ({ user }) => {
-    /*    const [results, setResults] = useState([]); */
+const Results = () => {
+    const dispatch = useDispatch();
+    const user = auth.currentUser.uid;
+    const { data: matches, loading, error } = useSelector((state) => state.matches);
 
-    /* useEffect(() => {
-        const fetchResults = async () => {
-            try {
-                const resultsRef = collection(db, 'results');
-                const q = query(resultsRef, where('userId', '==', user.id));
-                const querySnapshot = await getDocs(q);
-                const resultsData = querySnapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    ...doc.data(),
-                }));
-                setResults(resultsData);
-            } catch (error) {
-                console.error('Error fetching results:', error);
-            }
-        };
+    const fetchMatchesCallback = useCallback(() => {
+        dispatch(fetchMatches(user));
+    }, [dispatch, user]);
 
-        if (user) {
-            fetchResults();
-        }
-    }, [user]); */
+    useEffect(() => {
+        fetchMatchesCallback();
+    }, [fetchMatchesCallback]);
 
-    // Datos de ejemplo
-    const results = [
-        {
-            id: 1,
-            player1: 'John Doe',
-            player2: 'Jane Smith',
-            score: '6-4, 6-3',
-            date: '2023-06-10',
-        },
-        {
-            id: 2,
-            player1: 'John Doe',
-            player2: 'Mike Johnson',
-            score: '7-5, 6-7, 6-2',
-            date: '2023-06-05',
-        },
-        {
-            id: 3,
-            player1: 'John Doe',
-            player2: 'Sarah Williams',
-            score: '6-1, 6-2',
-            date: '2023-06-02',
-        },
-    ];
+    const sortedMatches = useMemo(() => {
+        return matches.sort((a, b) => {
+            const tournamentCompare = a.tournament.name.localeCompare(b.tournament.name);
+            if (tournamentCompare !== 0) return tournamentCompare;
+            return new Date(a.date) - new Date(b.date);
+        });
+    }, [matches]);
+
+    if (loading) {
+        return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
+        <Spin size="large" />
+    </div>
+    }
+
+    if (error) {
+        return <div>Error: {error}</div>;
+    }
 
     return (
         <Layout>
@@ -61,12 +44,12 @@ const Results = ({ user }) => {
                 <Title level={2}>Results</Title>
                 <List
                     itemLayout="horizontal"
-                    dataSource={results}
-                    renderItem={(result) => (
+                    dataSource={sortedMatches}
+                    renderItem={(match) => (
                         <List.Item>
                             <List.Item.Meta
-                                title={`${result.player1} vs ${result.player2}`}
-                                description={`Score: ${result.score} | Date: ${result.date}`}
+                                title={`${match.player1.name} vs ${match.player2.name} (${match.tournament.name})`}
+                                description={`Score: ${match.score}`}
                             />
                         </List.Item>
                     )}

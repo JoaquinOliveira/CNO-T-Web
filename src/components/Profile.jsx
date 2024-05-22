@@ -4,20 +4,17 @@ import { getUserById, updateUserInFirestore } from '../firebase/db';
 import { auth } from '../firebase/firebase-config';
 import { useNavigate } from 'react-router-dom';
 import PlayPreference from './subcomponents/PlayPreference';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUserData } from '../redux/userSlice';
 
 const Profile = () => {
     const [form] = Form.useForm();
     const navigate = useNavigate();
-    const [selectedHours, setSelectedHours] = useState([]);
-
-    useEffect(() => {
-        fetchUserData();
-    }, []);
-
-    const fetchUserData = async () => {
-        try {
-            const userId = auth.currentUser.uid;
-            const userData = await getUserById(userId);
+    const [selectedHours, setSelectedHours] = useState([])
+    const userData = useSelector((state) => state.user.data);
+    const dispatch = useDispatch()
+    
+        useEffect(() => {
             if (userData) {
                 form.setFieldsValue({
                     name: userData.name,
@@ -26,10 +23,8 @@ const Profile = () => {
                 });
                 setSelectedHours(userData.playPreference || []);
             }
-        } catch (error) {
-            console.error('Error al obtener los datos del usuario:', error);
-        }
-    };
+        }, [userData]);
+
 
     const handleSave = async (values) => {
         try {
@@ -39,6 +34,7 @@ const Profile = () => {
                 playPreference: selectedHours,
             };
             await updateUserInFirestore(userId, updatedData);
+            dispatch(setUserData(updatedData));
             notification.success({
                 message: 'Perfil actualizado',
                 description: 'Tu perfil se ha actualizado exitosamente.',

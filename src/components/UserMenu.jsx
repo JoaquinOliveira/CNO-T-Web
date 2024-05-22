@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Menu, Dropdown, Avatar, Modal } from 'antd';
 import { SettingOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import Profile from './Profile';
+import { useSelector } from 'react-redux';
 
-const UserMenu = ({ user }) => {
+
+
+const UserMenu = () => {
+
     const [visible, setVisible] = useState(false);
     const [profileModalVisible, setProfileModalVisible] = useState(false);
+    const userData = useSelector((state) => state.user.data);
 
     const handleVisibleChange = (flag) => {
         setVisible(flag);
@@ -18,14 +23,23 @@ const UserMenu = ({ user }) => {
 
     const closeProfileModal = () => {
         setProfileModalVisible(false);
-    };
-const fullName = 'Joaquin Oliveira'
-    // Obtener las iniciales del usuario
-    const getInitials = (fullName) => {
+    };    
+
+    
+    const getInitials = useCallback((fullName) => {
         const names = fullName.split(' ');
         const initials = names.map((name) => name.charAt(0).toUpperCase());
         return initials.join('');
-    };
+    }, []);
+
+    const memoizedInitials = useMemo(() => {
+        if (userData && userData.name) {
+            return getInitials(userData.name);
+        }
+        return '';
+    }, [userData, getInitials]);
+
+
 
     const menu = (
         <Menu>
@@ -54,7 +68,7 @@ const fullName = 'Joaquin Oliveira'
                         cursor: 'pointer',
                     }}
                 >
-                    {getInitials(fullName)}
+                    {memoizedInitials}
                 </Avatar>
             </Dropdown>
             <Modal
@@ -63,7 +77,7 @@ const fullName = 'Joaquin Oliveira'
                 onCancel={closeProfileModal}
                 footer={null}
             >
-                <Profile user={user} />
+                <Profile  />
             </Modal>
         </>
     );

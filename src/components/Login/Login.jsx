@@ -6,19 +6,28 @@ import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 
 import { auth } from '../../firebase/firebase-config';
 import escudoClub from '../../assets/CNLogo.png';
 import { createUserInFirestore, getUserById } from '../../firebase/db';
+import { useDispatch } from 'react-redux';
+import { setUserData } from '../../redux/userSlice';
+
 /* import fondoLogin from '../assets/fondo-login.jpg';  */
 
 const { Text } = Typography;
 
 const Login = () => {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
+
+
     const handleLogin = async (values) => {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
             const user = userCredential.user;
-
+            
             if (user.emailVerified) {
+                const userData = await getUserById(user.uid);         
+                dispatch(setUserData(userData));
                 navigate('/home');
+                
             } else {
                 notification.warning({
                     message: 'Correo electrónico no verificado',
@@ -41,10 +50,10 @@ const Login = () => {
             const provider = new GoogleAuthProvider();
             const result = await signInWithPopup(auth, provider);
             const user = result.user;
-    
+
             // Verificar si el usuario ya existe en la base de datos
             const userSnapshot = await getUserById(user.uid);
-    
+
             if (!userSnapshot) {
                 // Si el usuario no existe, registrarlo automáticamente y redirigir a la página de perfil
                 const newUser = {
@@ -53,9 +62,11 @@ const Login = () => {
                     // Agrega otros campos iniciales si es necesario
                 };
                 await createUserInFirestore(user.uid, newUser);
+                dispatch(setUserData(newUser)); // Guardar los datos del nuevo usuario en el estado global de Redux
                 navigate('/profile');
             } else {
-                // Si el usuario ya existe, redirigir a la página de inicio
+                // Si el usuario ya existe, guardar los datos del usuario en el estado global de Redux y redirigir a la página de inicio
+                dispatch(setUserData(userSnapshot))
                 navigate('/home');
             }
         } catch (error) {
