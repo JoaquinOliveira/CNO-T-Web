@@ -2,6 +2,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getTournaments, getTournamentById, enrollParticipant, withdrawParticipant, getTournamentDraw, createTournamentDraw } from '../firebase/db';
 import { fetchMatchesByTournamentId } from './matchesSlices';
+import { formatDrawForBracket } from '../components/subcomponents/utils'
+
 
 export const fetchTournamentById = createAsyncThunk('tournaments/fetchTournamentById', async (tournamentId) => {
     const tournament = await getTournamentById(tournamentId);
@@ -26,11 +28,20 @@ export const fetchTournamentDraw = createAsyncThunk('tournamentDraw/fetchTournam
     return draw;
 });
 
-export const createDraw = createAsyncThunk('tournamentDraw/createDraw', async ({ tournamentId, players }) => {
-    await createTournamentDraw(tournamentId, players);
-    const draw = await getTournamentDraw(tournamentId);
-    return draw;
-});
+export const createDraw = createAsyncThunk('tournamentDraw/createDraw', async (tournamentId, { getState }) => {
+    console.log('Creating draw for tournament:', tournamentId);
+    const state = getState();
+    const tournament = state.tournaments.data.find((t) => t.id === tournamentId);
+    
+    if (tournament) {
+      const players = tournament.participants;
+      await createTournamentDraw(tournamentId, players);
+      const draw = await getTournamentDraw(tournamentId);
+      return draw;
+    }
+    
+    return null;
+  });
 const tournamentsSlice = createSlice({
     name: 'tournaments',
     initialState: {
@@ -91,13 +102,18 @@ const tournamentsSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(createDraw.fulfilled, (state, action) => {
+            /* .addCase(createDraw.fulfilled, (state, action) => {
                 state.loading = false;
                 state.draw = action.payload;
-            })
+            }) */
             .addCase(createDraw.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.error.message;
+            })
+            .addCase(createDraw.fulfilled, (state, action) => {
+                state.loading = false;
+                state.draw = action.payload;
+                state.formattedDraw = formatDrawForBracket(action.payload);
             });
 
     },

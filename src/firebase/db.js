@@ -1,7 +1,7 @@
-import { collectionRef, addDoc, query, where, doc, setDoc, getDoc, getDocs, collection, updateDoc, deleteDoc, arrayUnion } from 'firebase/firestore';
+import { addDoc, query, where, doc, setDoc, getDoc, getDocs, collection, updateDoc, deleteDoc, arrayUnion } from 'firebase/firestore';
 import { auth, db } from './firebase-config'
 import moment from 'moment';
-
+import { formatDrawForBracket } from '../components/subcomponents/utils';
 
 
 // Configuración de Firebase
@@ -272,19 +272,17 @@ export const getAllMatches = async () => {
         throw error;
     }
 };
-
 export const getTournamentDraw = async (tournamentId) => {
+    console.log('Getting tournament draw for tournament:', tournamentId);
     try {
         const tournamentDrawRef = doc(db, 'tournamentDraws', tournamentId);
         const tournamentDrawSnapshot = await getDoc(tournamentDrawRef);
 
         if (tournamentDrawSnapshot.exists()) {
             const tournamentDrawData = tournamentDrawSnapshot.data();
-            const roundsCollection = collection(tournamentDrawRef, 'rounds');
-            const roundsSnapshot = await getDocs(roundsCollection);
+            const rounds = Object.values(tournamentDrawData.rounds);
 
-            const rounds = roundsSnapshot.docs.map((doc) => doc.data().matches);
-
+            console.log('Tournament draw retrieved successfully:', rounds);
             return {
                 tournamentId: tournamentDrawData.tournamentId,
                 numRounds: tournamentDrawData.numRounds,
@@ -319,24 +317,26 @@ export const saveTournamentDraw = async (tournamentId, draw) => {
         throw error;
     }
 };
-
 export const createTournamentDraw = async (tournamentId, players) => {
+    console.log('Creating tournament draw for tournament:', tournamentId);
     try {
         const drawStructure = generateDrawStructure(tournamentId, players);
+        console.log('Generated draw structure:', drawStructure);
+        const formattedDraw = formatDrawForBracket(drawStructure);
+        console.log('Formatted draw:', formattedDraw);
         const tournamentDrawRef = doc(db, 'tournamentDraws', tournamentId);
-        const roundsCollection = collection(tournamentDrawRef, 'rounds');
 
-        // Guardar información general del torneo
+        const roundsObject = drawStructure.rounds.reduce((obj, round, index) => {
+            obj[`round${index + 1}`] = round;
+            return obj;
+        }, {});
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Retraso artificial de 1 segundo
         await setDoc(tournamentDrawRef, {
             tournamentId: drawStructure.tournamentId,
             numRounds: drawStructure.rounds.length,
+            rounds: roundsObject,
+            formattedDraw,
         });
-
-        // Guardar cada ronda en un documento separado
-        for (let i = 0; i < drawStructure.rounds.length; i++) {
-            const roundRef = doc(roundsCollection, `round${i + 1}`);
-            await setDoc(roundRef, { matches: drawStructure.rounds[i] });
-        }
 
         console.log('Tournament draw created successfully');
     } catch (error) {
@@ -345,29 +345,36 @@ export const createTournamentDraw = async (tournamentId, players) => {
     }
 };
 
-export const generateDrawStructure = (tournamentId, players) => {
-    const rounds = [];
-    const shuffledPlayers = players.sort(() => Math.random() - 0.5);
-    let currentPlayers = shuffledPlayers.map((player) => ({ playerId: player, eliminated: false }));
 
-    while (currentPlayers.length > 1) {
-        const round = [];
-        for (let i = 0; i < currentPlayers.length; i += 2) {
+export const generateDrawStructure = (tournamentId, players) => {
+    const numPlayers = players.length;
+    const numRounds = Math.ceil(Math.log2(numPlayers));
+    const matches = [];
+
+    const generateRound = (round, playerList) => {
+        const roundMatches = [];
+        for (let i = 0; i < playerList.length; i += 2) {
+            const player1 = playerList[i];
+            const player2 = playerList[i + 1] || null;
             const match = {
-                id: `match${round.length + 1}`,
-                player1: currentPlayers[i].playerId,
-                player2: currentPlayers[i + 1] ? currentPlayers[i + 1].playerId : null,
+                id: `match-${round}-${i / 2}`,
+                player1,
+                player2,
                 winner: null,
             };
-            round.push(match);
+            roundMatches.push(match);
         }
-        rounds.push(round);
-        currentPlayers = currentPlayers.filter((player, index) => index % 2 === 0 && !player.eliminated);
-    }
+        matches.push(roundMatches);
+        if (roundMatches.length > 1) {
+            generateRound(round + 1, roundMatches.map((match) => match.winner));
+        }
+    };
+
+    generateRound(1, players);
 
     return {
         tournamentId,
-        rounds,
+        rounds: matches,
     };
 };
 // Exportar las funciones

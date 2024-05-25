@@ -8,7 +8,7 @@ const MatchesList = ({ tournamentId }) => {
     const dispatch = useDispatch();
     const { data: matches, loading, error } = useSelector((state) => state.matches);
     
-console.log(matches)
+
 
     useEffect(() => {
         dispatch(fetchMatches(tournamentId));
